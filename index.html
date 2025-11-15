@@ -111,5 +111,47 @@
       }, duration);
     }
   </script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+ const firebaseConfig = {
+  apiKey: "AIzaSyBEzIJI46QmYNVyIhmVj-A8ib-ZXbfZvNc",
+  authDomain: "dillo-74511.firebaseapp.com",
+  projectId: "dillo-74511",
+  storageBucket: "dillo-74511.firebasestorage.app",
+  messagingSenderId: "15567007246",
+  appId: "1:15567007246:web:0e24ef0899d0187317d65f"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Esempio: pubblica messaggio
+  const box = document.getElementById('box');
+  const publishBtn = document.getElementById('publish');
+  const messagesDiv = document.getElementById('messages');
+
+  publishBtn.addEventListener('click', () => {
+    const text = box.value.trim();
+    if (!text) return;
+    push(ref(db, 'messages'), { text, timestamp: Date.now() });
+    box.value = '';
+  });
+
+  // Esempio: leggi messaggi
+  onValue(ref(db, 'messages'), snapshot => {
+    messagesDiv.innerHTML = '';
+    const data = snapshot.val();
+    for (let id in data) {
+      const msg = document.createElement('div');
+      msg.textContent = data[id].text;
+      messagesDiv.appendChild(msg);
+    }
+  });
+</script>
+
 </body>
 </html>
+
