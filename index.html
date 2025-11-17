@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Messaggi temporanei</title>
+  <title>Messaggi temporanei eleganti</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -49,69 +49,11 @@
 </head>
 <body>
   <div class="container">
-    <h1>💬 Dillo per un giorno</h1>
-    <textarea id="box">Dillo...</textarea>
+    <h1>💬 Messaggi temporanei</h1>
+    <textarea id="box"></textarea>
     <button id="publish">Pubblica</button>
     <div class="messages" id="messages"></div>
   </div>
-
-/*  <script>
-    const box = document.getElementById('box');
-    const publishBtn = document.getElementById('publish');
-    const messagesDiv = document.getElementById('messages');
-
-    window.addEventListener('load', () => {
-      const saved = JSON.parse(localStorage.getItem('messages') || '[]');
-      const now = Date.now();
-      saved.forEach(m => {
-        const remaining = 60000 - (now - m.timestamp);
-        if (remaining > 0) showMessage(m.text, remaining, m.timestamp);
-      });
-    });
-
-    publishBtn.addEventListener('click', () => {
-      const text = box.value.trim();
-      if (!text) return;
-      box.value = '';
-      const msgObj = { text, timestamp: Date.now() };
-      const saved = JSON.parse(localStorage.getItem('messages') || '[]');
-      saved.push(msgObj);
-      localStorage.setItem('messages', JSON.stringify(saved));
-      showMessage(text, 60000, msgObj.timestamp);
-    });
-
-    function showMessage(text, duration, timestamp) {
-      const msg = document.createElement('div');
-      msg.className = 'message';
-      const content = document.createElement('span');
-      content.textContent = text;
-      const countdownEl = document.createElement('span');
-      countdownEl.className = 'countdown';
-      msg.appendChild(content);
-      msg.appendChild(countdownEl);
-      messagesDiv.appendChild(msg);
-
-      let remaining = Math.floor(duration / 1000);
-      countdownEl.textContent = `⏱️ ${remaining}s`;
-
-      const intervalId = setInterval(() => {
-        remaining--;
-        countdownEl.textContent = `⏱️ ${remaining}s`;
-        if (remaining <= 0) clearInterval(intervalId);
-      }, 1000);
-
-      setTimeout(() => {
-        msg.classList.add('fadeout');
-        setTimeout(() => {
-          msg.remove();
-          const saved = JSON.parse(localStorage.getItem('messages') || '[]');
-          const updated = saved.filter(m => m.timestamp !== timestamp);
-          localStorage.setItem('messages', JSON.stringify(updated));
-        }, 800);
-      }, duration);
-    }
-  </script> *\
-  
 
  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -138,24 +80,30 @@
     publishBtn.addEventListener('click', () => {
       const text = box.value.trim();
       if (!text) return;
-      push(ref(db, 'messages'), { text, timestamp: Date.now() });
+      push(ref(db, 'messages'), { text, timestamp: Date.now(), expireAt: Date.now() + 60000 });
       box.value = '';
     });
    
   // Leggi messaggi dal database in tempo reale
     onValue(ref(db, 'messages'), snapshot => {
-      messagesDiv.innerHTML = '';
-      const data = snapshot.val();
-      for (let id in data) {
-        const msg = document.createElement('div');
-        msg.textContent = data[id].text;
-        messagesDiv.appendChild(msg);
-      }
-    });
+  messagesDiv.innerHTML = '';
+  const data = snapshot.val();
+  const now = Date.now();
+  for (let id in data) {
+    if (data[id].expireAt > now) {
+      const msg = document.createElement('div');
+      msg.textContent = data[id].text;
+      messagesDiv.appendChild(msg);
+    }
+  }
+});
+
   </script>
 
 </body>
 </html>
+
+
 
 
 
