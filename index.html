@@ -76,13 +76,25 @@
     const publishBtn = document.getElementById('publish');
     const messagesDiv = document.getElementById('messages');
 
-    // Pubblica messaggio → lo salva nel database
-    publishBtn.addEventListener('click', () => {
-      const text = box.value.trim();
-      if (!text) return;
-      push(ref(db, 'messages'), { text, timestamp: Date.now(), expireAt: Date.now() + 60000 });
-      box.value = '';
-    });
+  publishBtn.addEventListener('click', () => {
+  const text = box.value.trim();
+  if (!text) return;
+  const now = new Date();
+
+  // Formatta data e ora leggibile
+  const formatted = now.toLocaleString("it-IT", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  });
+
+  push(ref(db, 'messages'), {
+    text,
+    timestamp: now.getTime(),   // valore numerico per calcoli
+    publishedAt: formatted      // stringa leggibile per il database
+  });
+
+  box.value = '';
+});
    
   // Leggi messaggi dal database in tempo reale
     onValue(ref(db, 'messages'), snapshot => {
@@ -102,6 +114,7 @@
 
 </body>
 </html>
+
 
 
 
