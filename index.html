@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Messaggi temporanei condivisi</title>
+  <title>Messaggi temporanei</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -45,8 +45,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>💬 Messaggi temporanei</h1>
-    <textarea id="box" placeholder="Scrivi un messaggio..."></textarea>
+    <h1>💬Dillo per un'ora</h1>
+    <textarea id="box" placeholder="Dillo..."></textarea>
     <button id="publish">Pubblica</button>
     <div class="messages" id="messages"></div>
   </div>
@@ -55,16 +55,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-    // 🔑 Inserisci qui i tuoi dati da Firebase Console
     const firebaseConfig = {
-      apiKey: "COPIA QUI",
-      authDomain: "COPIA QUI",
-      databaseURL: "https://dillo-74511-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "dillo-74511",
-      storageBucket: "dillo-74511.appspot.com",
-      messagingSenderId: "15567007246",
-      appId: "1:15567007246:web:0e24ef0899d0187317d65f"
-    };
+  apiKey: "AIzaSyBEzIJI46QmYNVyIhmVj-A8ib-ZXbfZvNc",
+  authDomain: "dillo-74511.firebaseapp.com",
+  databaseURL: "https://dillo-74511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "dillo-74511",
+  storageBucket: "dillo-74511.appspot.com",
+  messagingSenderId: "15567007246",
+  appId: "1:15567007246:web:0e24ef0899d0187317d65f"
+};
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -129,6 +128,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
