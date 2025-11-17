@@ -85,9 +85,7 @@
 
       push(ref(db, 'messages'), {
         text,
-        timestamp: now.getTime(),
-        publishedAt: formatted,
-        expireAt: now.getTime() + 60000 // visibile per 60 secondi
+        publishedAt: formatted
       });
 
       box.value = '';
@@ -128,6 +126,7 @@
   </script>
 </body>
 </html>
+
 
 
 
