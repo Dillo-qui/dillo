@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <title>Messaggi temporanei con risposte</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Dillo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: "Inter", sans-serif;
@@ -23,41 +23,39 @@
       width: 100%;
     }
     h1 { text-align: center; margin-bottom: 20px; }
-    textarea, input[type="text"] {
-      width: 100%; padding: 12px; border-radius: 12px;
-      border: 1px solid #ddd; margin-bottom: 10px;
+    textarea {
+      width: 100%; min-height: 100px; padding: 12px;
+      border-radius: 12px; border: 1px solid #ddd;
+      margin-bottom: 12px;
     }
     button {
-      padding: 10px 16px; border: none; border-radius: 12px;
+      width: 100%; padding: 12px;
+      border: none; border-radius: 12px;
       background: linear-gradient(135deg, #8b5cf6, #6366f1);
       color: #fff; font-weight: bold; cursor: pointer;
     }
     .messages { margin-top: 20px; }
     .message {
       background: #f9fafb; border: 1px solid #e5e7eb;
-      border-radius: 12px; padding: 12px; margin-bottom: 12px;
+      border-radius: 12px; padding: 12px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
     }
     .countdown { font-size: 14px; color: #6b7280; }
-    .published { font-size: 12px; color: #6b7280; }
-    .replies { margin-top: 8px; padding-left: 12px; border-left: 3px solid #e5e7eb; }
-    .reply { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; margin-bottom: 6px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>💬 Messaggi temporanei con risposte</h1>
-
-    <textarea id="box" placeholder="Scrivi un messaggio..."></textarea>
+    <h1>💬Dillo per un giorno</h1>
+    <textarea id="box" placeholder="Dillo..."></textarea>
     <button id="publish">Pubblica</button>
-
     <div class="messages" id="messages"></div>
   </div>
 
- <script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-   
- const firebaseConfig = {
+
+    const firebaseConfig = {
   apiKey: "AIzaSyBEzIJI46QmYNVyIhmVj-A8ib-ZXbfZvNc",
   authDomain: "dillo-74511.firebaseapp.com",
   databaseURL: "https://dillo-74511-default-rtdb.europe-west1.firebasedatabase.app",
@@ -67,102 +65,61 @@
   appId: "1:15567007246:web:0e24ef0899d0187317d65f"
 };
 
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const box = document.getElementById("box");
-    const publishBtn = document.getElementById("publish");
-    const messagesDiv = document.getElementById("messages");
+    const box = document.getElementById('box');
+    const publishBtn = document.getElementById('publish');
+    const messagesDiv = document.getElementById('messages');
 
-    function formatNow() {
+    // Pubblica messaggio con data/ora leggibile e scadenza
+    publishBtn.addEventListener('click', () => {
+      const text = box.value.trim();
+      if (!text) return;
       const now = new Date();
-      return now.toLocaleString("it-IT", {
+
+      const formatted = now.toLocaleString("it-IT", {
         day: "2-digit", month: "2-digit", year: "numeric",
         hour: "2-digit", minute: "2-digit", second: "2-digit"
       });
-    }
 
-    // Pubblica messaggio
-    publishBtn.addEventListener("click", () => {
-      const text = box.value.trim();
-      if (!text) return;
-      push(ref(db, "messages"), {
+      push(ref(db, 'messages'), {
         text,
-        publishedAt: formatNow()
+        timestamp: now.getTime(),
+        publishedAt: formatted,
+        expireAt: now.getTime() + 60000 // visibile per 60 secondi
       });
-      box.value = "";
+
+      box.value = '';
     });
 
-    // Mostra solo messaggi degli ultimi 60s
-    onValue(ref(db, "messages"), snapshot => {
-      messagesDiv.innerHTML = "";
-      const data = snapshot.val() || {};
+    // Mostra messaggi con countdown, spariscono dall'interfaccia dopo 60s
+    onValue(ref(db, 'messages'), snapshot => {
+      messagesDiv.innerHTML = '';
+      const data = snapshot.val();
       const now = Date.now();
-
       for (let id in data) {
         const msgData = data[id];
-        const publishedTime = new Date(msgData.publishedAt).getTime();
-        const diff = now - publishedTime;
-
-        if (diff < 60000) { // solo se non sono passati 60s
-          const msgEl = document.createElement("div");
-          msgEl.className = "message";
-
-          const header = document.createElement("div");
-          header.innerHTML = `<strong>${msgData.text}</strong> <span class="countdown"></span>`;
-          msgEl.appendChild(header);
-
-          const publishedEl = document.createElement("div");
-          publishedEl.className = "published";
-          publishedEl.textContent = `Pubblicato: ${msgData.publishedAt}`;
-          msgEl.appendChild(publishedEl);
-
-          // Risposte
-          const repliesDiv = document.createElement("div");
-          repliesDiv.className = "replies";
-          if (msgData.replies) {
-            for (let rid in msgData.replies) {
-              const reply = msgData.replies[rid];
-              const replyEl = document.createElement("div");
-              replyEl.className = "reply";
-              replyEl.textContent = `${reply.text} (${reply.publishedAt})`;
-              repliesDiv.appendChild(replyEl);
-            }
-          }
-
-          // Form risposta
-          const replyInput = document.createElement("input");
-          replyInput.type = "text";
-          replyInput.placeholder = "Scrivi una risposta...";
-          const replyBtn = document.createElement("button");
-          replyBtn.textContent = "Rispondi";
-          replyBtn.onclick = () => {
-            const rtext = replyInput.value.trim();
-            if (!rtext) return;
-            push(ref(db, `messages/${id}/replies`), {
-              text: rtext,
-              publishedAt: formatNow()
-            });
-            replyInput.value = "";
-          };
-
-          repliesDiv.appendChild(replyInput);
-          repliesDiv.appendChild(replyBtn);
-          msgEl.appendChild(repliesDiv);
-
-          messagesDiv.appendChild(msgEl);
+        if (msgData.expireAt > now) {
+          const msg = document.createElement('div');
+          msg.className = 'message';
+          const content = document.createElement('span');
+          content.textContent = `${msgData.text} (pubblicato: ${msgData.publishedAt})`;
+          const countdownEl = document.createElement('span');
+          countdownEl.className = 'countdown';
+          msg.appendChild(content);
+          msg.appendChild(countdownEl);
+          messagesDiv.appendChild(msg);
 
           // Countdown visibile
-          let remaining = Math.floor((60000 - diff) / 1000);
-          const countdownEl = header.querySelector(".countdown");
+          let remaining = Math.floor((msgData.expireAt - now) / 1000);
           countdownEl.textContent = `⏱️ ${remaining}s`;
           const intervalId = setInterval(() => {
             remaining--;
             countdownEl.textContent = `⏱️ ${remaining}s`;
             if (remaining <= 0) {
               clearInterval(intervalId);
-              msgEl.remove();
+              msg.remove(); // sparisce dall'interfaccia, ma resta nel database
             }
           }, 1000);
         }
