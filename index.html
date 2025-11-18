@@ -2,56 +2,45 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Messaggi e risposte temporanei</title>
+  <title>Messaggi temporanei con risposte</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+      font-family: "Inter", sans-serif;
       background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       padding: 40px;
-      color: #333;
     }
     .container {
       background: #fff;
-      border-radius: 24px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 700px;
       width: 100%;
-      max-width: 800px;
     }
-    h1 { font-size: 1.8rem; margin-bottom: 16px; color: #4b5563; text-align: center; }
+    h1 { text-align: center; margin-bottom: 20px; }
     textarea, input[type="text"] {
-      width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 14px;
-      font-size: 16px; background: #fafafa; margin-bottom: 10px;
+      width: 100%; padding: 12px; border-radius: 12px;
+      border: 1px solid #ddd; margin-bottom: 10px;
     }
     button {
-      padding: 12px 18px; border: none; border-radius: 14px;
+      padding: 10px 16px; border: none; border-radius: 12px;
       background: linear-gradient(135deg, #8b5cf6, #6366f1);
-      color: #fff; font-weight: 600; font-size: 16px; cursor: pointer;
+      color: #fff; font-weight: bold; cursor: pointer;
     }
-    .messages { margin-top: 24px; }
+    .messages { margin-top: 20px; }
     .message {
-      background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px;
-      padding: 14px; margin-bottom: 14px;
-    }
-    .message-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+      background: #f9fafb; border: 1px solid #e5e7eb;
+      border-radius: 12px; padding: 12px; margin-bottom: 12px;
     }
     .countdown { font-size: 14px; color: #6b7280; }
     .published { font-size: 12px; color: #6b7280; }
     .replies { margin-top: 8px; padding-left: 12px; border-left: 3px solid #e5e7eb; }
-    .reply {
-      background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
-      padding: 10px; margin-bottom: 8px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .reply-footer { display: flex; gap: 8px; align-items: center; }
-    .reply-form { display: flex; gap: 8px; margin-top: 8px; }
-    .fadeout { opacity: 0; height: 0; margin: 0; padding: 0; transition: all 0.6s ease; }
+    .reply { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -67,8 +56,8 @@
  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
-    const firebaseConfig = {
+   
+ const firebaseConfig = {
   apiKey: "AIzaSyBEzIJI46QmYNVyIhmVj-A8ib-ZXbfZvNc",
   authDomain: "dillo-74511.firebaseapp.com",
   databaseURL: "https://dillo-74511-default-rtdb.europe-west1.firebasedatabase.app",
@@ -86,7 +75,6 @@
     const publishBtn = document.getElementById("publish");
     const messagesDiv = document.getElementById("messages");
 
-    // Utilità: formatta data/ora in italiano
     function formatNow() {
       const now = new Date();
       return now.toLocaleString("it-IT", {
@@ -95,7 +83,7 @@
       });
     }
 
-    // Pubblica messaggio (solo text + publishedAt nel DB)
+    // Pubblica messaggio
     publishBtn.addEventListener("click", () => {
       const text = box.value.trim();
       if (!text) return;
@@ -106,125 +94,84 @@
       box.value = "";
     });
 
-    // Render con countdown di 60s lato client (non cancella dal DB)
+    // Mostra solo messaggi degli ultimi 60s
     onValue(ref(db, "messages"), snapshot => {
       messagesDiv.innerHTML = "";
       const data = snapshot.val() || {};
+      const now = Date.now();
 
-      // Per avere un ordine dal più recente al più vecchio
-      const entries = Object.entries(data).sort((a, b) => {
-        const pa = a[1].publishedAt || "";
-        const pb = b[1].publishedAt || "";
-        return pb.localeCompare(pa);
-      });
+      for (let id in data) {
+        const msgData = data[id];
+        const publishedTime = new Date(msgData.publishedAt).getTime();
+        const diff = now - publishedTime;
 
-      for (const [id, msgData] of entries) {
-        const messageEl = document.createElement("div");
-        messageEl.className = "message";
+        if (diff < 60000) { // solo se non sono passati 60s
+          const msgEl = document.createElement("div");
+          msgEl.className = "message";
 
-        const header = document.createElement("div");
-        header.className = "message-header";
+          const header = document.createElement("div");
+          header.innerHTML = `<strong>${msgData.text}</strong> <span class="countdown"></span>`;
+          msgEl.appendChild(header);
 
-        const textEl = document.createElement("div");
-        textEl.textContent = msgData.text;
+          const publishedEl = document.createElement("div");
+          publishedEl.className = "published";
+          publishedEl.textContent = `Pubblicato: ${msgData.publishedAt}`;
+          msgEl.appendChild(publishedEl);
 
-        const countdownEl = document.createElement("span");
-        countdownEl.className = "countdown";
+          // Risposte
+          const repliesDiv = document.createElement("div");
+          repliesDiv.className = "replies";
+          if (msgData.replies) {
+            for (let rid in msgData.replies) {
+              const reply = msgData.replies[rid];
+              const replyEl = document.createElement("div");
+              replyEl.className = "reply";
+              replyEl.textContent = `${reply.text} (${reply.publishedAt})`;
+              repliesDiv.appendChild(replyEl);
+            }
+          }
 
-        header.appendChild(textEl);
-        header.appendChild(countdownEl);
+          // Form risposta
+          const replyInput = document.createElement("input");
+          replyInput.type = "text";
+          replyInput.placeholder = "Scrivi una risposta...";
+          const replyBtn = document.createElement("button");
+          replyBtn.textContent = "Rispondi";
+          replyBtn.onclick = () => {
+            const rtext = replyInput.value.trim();
+            if (!rtext) return;
+            push(ref(db, `messages/${id}/replies`), {
+              text: rtext,
+              publishedAt: formatNow()
+            });
+            replyInput.value = "";
+          };
 
-        const publishedEl = document.createElement("div");
-        publishedEl.className = "published";
-        publishedEl.textContent = `Pubblicato: ${msgData.publishedAt}`;
+          repliesDiv.appendChild(replyInput);
+          repliesDiv.appendChild(replyBtn);
+          msgEl.appendChild(repliesDiv);
 
-        messageEl.appendChild(header);
-        messageEl.appendChild(publishedEl);
+          messagesDiv.appendChild(msgEl);
 
-        // Sezione risposte
-        const repliesWrap = document.createElement("div");
-        repliesWrap.className = "replies";
-
-        // Mostra risposte esistenti (se presenti)
-        const replies = msgData.replies || {};
-        const repliesEntries = Object.entries(replies);
-        for (const [rid, replyData] of repliesEntries) {
-          const replyEl = createReplyEl(replyData);
-          repliesWrap.appendChild(replyEl);
+          // Countdown visibile
+          let remaining = Math.floor((60000 - diff) / 1000);
+          const countdownEl = header.querySelector(".countdown");
+          countdownEl.textContent = `⏱️ ${remaining}s`;
+          const intervalId = setInterval(() => {
+            remaining--;
+            countdownEl.textContent = `⏱️ ${remaining}s`;
+            if (remaining <= 0) {
+              clearInterval(intervalId);
+              msgEl.remove();
+            }
+          }, 1000);
         }
-
-        // Form di risposta
-        const replyForm = document.createElement("div");
-        replyForm.className = "reply-form";
-
-        const replyInput = document.createElement("input");
-        replyInput.type = "text";
-        replyInput.placeholder = "Scrivi una risposta...";
-
-        const replyBtn = document.createElement("button");
-        replyBtn.textContent = "Rispondi";
-        replyBtn.addEventListener("click", () => {
-          const rtext = replyInput.value.trim();
-          if (!rtext) return;
-          push(ref(db, `messages/${id}/replies`), {
-            text: rtext,
-            publishedAt: formatNow()
-          });
-          replyInput.value = "";
-        });
-
-        replyForm.appendChild(replyInput);
-        replyForm.appendChild(replyBtn);
-
-        repliesWrap.appendChild(replyForm);
-        messageEl.appendChild(repliesWrap);
-        messagesDiv.appendChild(messageEl);
-
-        // Countdown 60s per il messaggio (sparisce dall'interfaccia)
-        startCountdown(countdownEl, messageEl, 60);
       }
     });
-
-    // Crea elemento risposta con countdown 60s
-    function createReplyEl(replyData) {
-      const wrap = document.createElement("div");
-      wrap.className = "reply";
-
-      const content = document.createElement("div");
-      content.innerHTML = `<strong>${replyData.text}</strong><br><small>${replyData.publishedAt}</small>`;
-
-      const footer = document.createElement("div");
-      footer.className = "reply-footer";
-
-      const cd = document.createElement("span");
-      cd.className = "countdown";
-
-      footer.appendChild(cd);
-
-      wrap.appendChild(content);
-      wrap.appendChild(footer);
-
-      startCountdown(cd, wrap, 60); // nascondi risposta dopo 60s (non cancella dal DB)
-      return wrap;
-    }
-
-    // Avvia countdown e nascondi elemento quando arriva a 0
-    function startCountdown(labelEl, containerEl, seconds) {
-      let remaining = seconds;
-      labelEl.textContent = `⏱️ ${remaining}s`;
-      const intervalId = setInterval(() => {
-        remaining--;
-        labelEl.textContent = `⏱️ ${remaining}s`;
-        if (remaining <= 0) {
-          clearInterval(intervalId);
-          containerEl.classList.add("fadeout");
-          setTimeout(() => containerEl.remove(), 600);
-        }
-      }, 1000);
-    }
   </script>
 </body>
 </html>
+
 
 
 
